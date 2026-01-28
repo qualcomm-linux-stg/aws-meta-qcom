@@ -12,6 +12,11 @@ on:
         description: "URL to retrieve build artifacts"
         value: ${{ jobs.create-output.outputs.url }}
 
+# Councurrency to prevent running workflow for same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CACHE_DIR: /efs/qli/meta-qcom
   KAS_REPO_REF_DIR: /efs/qli/meta-qcom/kas-mirrors
@@ -19,8 +24,8 @@ env:
 
 jobs:
   kas-setup:
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     steps:
       - name: Update kas-container
         run: |
@@ -48,8 +53,8 @@ jobs:
 
   yocto-run-checks:
     needs: kas-setup
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     steps:
       - uses: actions/checkout@v4
 
@@ -68,8 +73,8 @@ jobs:
 
   compile_warm_up:
     needs: [kas-setup, yocto-run-checks]
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     strategy:
       fail-fast: true
       matrix:
@@ -110,8 +115,8 @@ jobs:
 
   compile:
     needs: compile_warm_up
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     outputs:
       url: ${{ steps.compile_kas.outputs.url }}
     strategy:
@@ -213,7 +218,7 @@ jobs:
 
   publish_summary:
     needs: compile
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     steps:
       - name: 'Download build URLs'
         uses: actions/download-artifact@v6
