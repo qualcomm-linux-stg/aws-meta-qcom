@@ -18,13 +18,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CACHE_DIR: /efs/qli/meta-qcom
+  CACHE_DIR: /s3efs/qli/meta-qcom
   KAS_CLONE_DEPTH: 1
 
 jobs:
   kas-setup:
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     steps:
       - name: Setting up kas-container
         run: |
@@ -54,8 +54,8 @@ jobs:
 
   yocto-run-checks:
     needs: kas-setup
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     steps:
       - uses: actions/checkout@v4
 
@@ -87,33 +87,33 @@ jobs:
 
   compile_warm_up:
     needs: kas-setup
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     strategy:
       fail-fast: true
       matrix:
         machine:
-          - rb3gen2-core-kit
+          # - rb3gen2-core-kit
           - qcom-armv8a
         distro:
           - name: nodistro
             yamlfile: ""
           - name: qcom-distro
             yamlfile: ':ci/qcom-distro-prop-image.yml'
-          - name: qcom-distro-catchall
-            yamlfile: ':ci/qcom-distro-catchall.yml'
-          - name: performance
-            yamlfile: ':ci/qcom-distro-prop-image.yml:ci/performance.yml'
+          # - name: qcom-distro-catchall
+          #   yamlfile: ':ci/qcom-distro-catchall.yml'
+          # - name: performance
+          #   yamlfile: ':ci/qcom-distro-prop-image.yml:ci/performance.yml'
         kernel:
           - type: default
             dirname: ""
             yamlfile: ""
-          - type: 6.18
-            dirname: "_linux-qcom-6.18"
-            yamlfile: ":ci/linux-qcom-6.18.yml"
-          - type: rt-6.18-distro-kvm
-            dirname: "_linux-qcom-rt-6.18_qcom-distro-kvm"
-            yamlfile: ":ci/linux-qcom-rt-6.18.yml:ci/qcom-distro-kvm.yml"
+          # - type: 6.18
+          #   dirname: "_linux-qcom-6.18"
+          #   yamlfile: ":ci/linux-qcom-6.18.yml"
+          # - type: rt-6.18-distro-kvm
+          #   dirname: "_linux-qcom-rt-6.18_qcom-distro-kvm"
+          #   yamlfile: ":ci/linux-qcom-rt-6.18.yml:ci/qcom-distro-kvm.yml"
     name: ${{ matrix.machine }}/${{ matrix.distro.name }}${{ matrix.kernel.dirname }}
     steps:
       - uses: actions/checkout@v4
@@ -131,45 +131,45 @@ jobs:
 
   compile:
     needs: compile_warm_up
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     outputs:
       url: ${{ steps.compile_kas.outputs.url }}
     strategy:
       fail-fast: false
       matrix:
         machine:
-          - glymur-crd
-          - iq-615-evk
-          - iq-8275-evk
-          - iq-9075-evk
-          - iq-x7181-evk
-          - kaanapali-mtp
-          - qcm6490-idp
-          - qcs615-ride
-          - qcs8300-ride-sx
-          - qcs9100-ride-sx
+          # - glymur-crd
+          # - iq-615-evk
+          # - iq-8275-evk
+          # - iq-9075-evk
+          # - iq-x7181-evk
+          # - kaanapali-mtp
+          # - qcm6490-idp
+          # - qcs615-ride
+          # - qcs8300-ride-sx
+          # - qcs9100-ride-sx
           - rb1-core-kit
           - sm8750-mtp
         distro:
           - name: nodistro
             yamlfile: ""
-          - name: qcom-distro
-            yamlfile: ':ci/qcom-distro-prop-image.yml'
-          - name: qcom-distro-catchall
-            yamlfile: ':ci/qcom-distro-catchall.yml'
-          - name: performance
-            yamlfile: ':ci/qcom-distro-prop-image.yml:ci/performance.yml'
+          # - name: qcom-distro
+          #   yamlfile: ':ci/qcom-distro-prop-image.yml'
+          # - name: qcom-distro-catchall
+          #   yamlfile: ':ci/qcom-distro-catchall.yml'
+          # - name: performance
+          #   yamlfile: ':ci/qcom-distro-prop-image.yml:ci/performance.yml'
         kernel:
           - type: default
             dirname: ""
             yamlfile: ""
-          - type: 6.18
-            dirname: "_linux-qcom-6.18"
-            yamlfile: ":ci/linux-qcom-6.18.yml"
-          - type: rt-6.18-distro-kvm
-            dirname: "_linux-qcom-rt-6.18_qcom-distro-kvm"
-            yamlfile: ":ci/linux-qcom-rt-6.18.yml:ci/qcom-distro-kvm.yml"
+          # - type: 6.18
+          #   dirname: "_linux-qcom-6.18"
+          #   yamlfile: ":ci/linux-qcom-6.18.yml"
+          # - type: rt-6.18-distro-kvm
+          #   dirname: "_linux-qcom-rt-6.18_qcom-distro-kvm"
+          #   yamlfile: ":ci/linux-qcom-rt-6.18.yml:ci/qcom-distro-kvm.yml"
         include:
           # Additional builds for specific machines
           - machine: qcom-armv8a
