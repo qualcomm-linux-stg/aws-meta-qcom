@@ -308,7 +308,7 @@ jobs:
 
   publish_summary:
     needs: compile
-    if: ${{ always() && github.repository_owner == 'qualcomm-linux' }}
+    if: ${{ always() && github.repository_owner == 'qualcomm-linux-stg' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -321,7 +321,7 @@ jobs:
           pattern: build-url*
 
   build_successful:
-    if: github.repository_owner == 'qualcomm-linux'
+    if: github.repository_owner == 'qualcomm-linux-stg'
     needs: compile
     runs-on: ubuntu-latest
     steps:
