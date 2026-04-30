@@ -18,13 +18,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CACHE_DIR: /efs/qli/meta-qcom
+  CACHE_DIR: /s3efs/qli/meta-qcom
   KAS_CLONE_DEPTH: 1
 
 jobs:
   kas-setup:
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     steps:
       - name: Setting up kas-container
         run: |
@@ -57,8 +57,8 @@ jobs:
 
   yocto-run-checks:
     needs: kas-setup
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -92,8 +92,8 @@ jobs:
 
   compile_warm_up:
     needs: kas-setup
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     strategy:
       fail-fast: true
       matrix:
@@ -128,8 +128,8 @@ jobs:
 
   compile:
     needs: compile_warm_up
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     outputs:
       url: ${{ steps.compile_kas.outputs.url }}
     strategy:
@@ -205,7 +205,7 @@ jobs:
             kernel:
                 type: default
         include:
-          # Additional builds for specific machines
+          #Additional builds for specific machines
           - machine: qcom-armv8a
             distro:
                 name: qcom-distro
@@ -308,7 +308,7 @@ jobs:
 
   publish_summary:
     needs: compile
-    if: ${{ always() && github.repository_owner == 'qualcomm-linux' }}
+    if: ${{ always() && github.repository_owner == 'qualcomm-linux-stg' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -321,7 +321,7 @@ jobs:
           pattern: build-url*
 
   build_successful:
-    if: github.repository_owner == 'qualcomm-linux'
+    if: github.repository_owner == 'qualcomm-linux-stg'
     needs: compile
     runs-on: ubuntu-latest
     steps:
