@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CACHE_DIR: /fsxscr/qli/meta-qcom
+  CACHE_DIR: /efsx/qli/meta-qcom
   KAS_CLONE_DEPTH: 1
 
 jobs:
@@ -117,7 +117,7 @@ jobs:
     if: |
       github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     steps:
       - uses: actions/checkout@v6
         with:
