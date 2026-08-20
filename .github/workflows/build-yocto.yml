@@ -26,13 +26,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CACHE_DIR: /efs/qli/meta-qcom
+  CACHE_DIR: /efsx/qli/meta-qcom
   KAS_CLONE_DEPTH: 1
 
 jobs:
   kas-setup:
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -61,7 +61,7 @@ jobs:
 
   github-cache-check:
     needs: kas-setup
-    if: github.repository_owner == 'qualcomm-linux'
+    if: github.repository_owner == 'qualcomm-linux-stg'
     runs-on: ubuntu-latest
     outputs:
       cache_hit: ${{ steps.restore.outputs.cache-hit == 'true' }}
@@ -111,9 +111,9 @@ jobs:
   yocto-run-checks:
     needs: [kas-setup, github-cache-check]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    runs-on: [self-hosted, qcom-stg-u2404, amd64]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -133,7 +133,8 @@ jobs:
       - name: Setup cache variables (used by oe-selftest)
         run: |
           echo "DL_DIR=${CACHE_DIR}/downloads" >> $GITHUB_ENV
-          echo "SSTATE_DIR=${CACHE_DIR}/sstate-cache-$(date '+%Y-%m')" >> $GITHUB_ENV
+          #echo "SSTATE_DIR=${CACHE_DIR}/sstate-cache-$(date '+%Y-%m')" >> $GITHUB_ENV
+          echo "SSTATE_DIR=${CACHE_DIR}/sstate-cache" >> $GITHUB_ENV
 
       - name: Run Yocto patchreview
         run: |
@@ -148,7 +149,7 @@ jobs:
           ci/kas-container-shell-helper.sh ci/oe-selftest.sh
 
   compile-env:
-    if: github.repository_owner == 'qualcomm-linux'
+    if: github.repository_owner == 'qualcomm-linux-stg'
     runs-on: ubuntu-latest
     outputs:
       CACHE_DIR: ${{ steps.compile_env.outputs.CACHE_DIR }}
@@ -161,7 +162,7 @@ jobs:
   compile_warm_up:
     needs: [kas-setup, github-cache-check, compile-env]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
     strategy:
       fail-fast: true
@@ -200,7 +201,7 @@ jobs:
   compile_sdk:
     needs: [github-cache-check, compile_warm_up, compile-env]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
     uses: ./.github/workflows/compile.yml
     with:
@@ -218,7 +219,7 @@ jobs:
   compile:
     needs: [github-cache-check, compile_warm_up, compile-env]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
     strategy:
       fail-fast: false
@@ -469,7 +470,7 @@ jobs:
   publish_summary:
     needs: [github-cache-check, compile, compile_sdk]
     if: |
-      always() && github.repository_owner == 'qualcomm-linux' &&
+      always() && github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
     runs-on: ubuntu-latest
     steps:
@@ -485,7 +486,7 @@ jobs:
   github-cache-save:
     needs: [github-cache-check, compile, compile_sdk]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       inputs.skip_if_github_cached == true &&
       needs.github-cache-check.outputs.cache_hit != 'true' &&
       needs.compile.result == 'success'
@@ -501,7 +502,7 @@ jobs:
           key: build-success-${{ github.repository }}-${{ github.workflow }}-${{ github.ref_name }}-${{ needs.github-cache-check.outputs.run_hash }}
 
   build_successful:
-    if: github.repository_owner == 'qualcomm-linux'
+    if: github.repository_owner == 'qualcomm-linux-stg'
     needs: [compile, compile_sdk]
     runs-on: ubuntu-latest
     steps:
