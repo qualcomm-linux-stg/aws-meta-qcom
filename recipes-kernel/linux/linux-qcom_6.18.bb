@@ -20,8 +20,8 @@ KERNEL_PAHOLE ?= '${@oe.utils.vartrue("DEBUG_BUILD", bb.utils.contains("BBFILE_C
 do_configure[depends] += '${@oe.utils.vartrue("KERNEL_PAHOLE", "pahole-native:do_populate_sysroot", "", d)}'
 EXTRA_OEMAKE += '${@oe.utils.vartrue("KERNEL_PAHOLE", "", "PAHOLE=false", d)}'
 
-# tag:qcom-6.18.y-20260914
-SRCREV ?= "b6e015a3cb198d7e51848e1f2037f255b4d36b0e"
+# tag:qcom-6.18.y-20260926
+SRCREV ?= "8d0ad3756ce7d4febc2a5cbdc4d7ab9781d798ca"
 
 SRCBRANCH ?= "nobranch=1"
 SRCBRANCH:class-devupstream ?= "branch=qcom-6.18.y"
@@ -47,7 +47,7 @@ S = "${UNPACKDIR}/${BP}"
 KBUILD_DEFCONFIG ?= "defconfig"
 KBUILD_DEFCONFIG:qcom-armv7a = "qcom_defconfig"
 
-KBUILD_CONFIG_EXTRA = "${@bb.utils.contains('DISTRO_FEATURES', 'hardened', '${S}/kernel/configs/hardening.config', '', d)}"
+KBUILD_CONFIG_EXTRA = "${S}/kernel/configs/hardening.config"
 KBUILD_CONFIG_EXTRA:append:aarch64 = " ${S}/arch/arm64/configs/prune.config"
 KBUILD_CONFIG_EXTRA:append:aarch64 = " ${S}/arch/arm64/configs/qcom.config"
 KBUILD_CONFIG_EXTRA:append = " ${@oe.utils.vartrue('DEBUG_BUILD', '${S}/kernel/configs/debug.config', '', d)}"
