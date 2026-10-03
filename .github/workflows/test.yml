@@ -24,9 +24,9 @@ on:
         description: "Token used to submit jobs to the LAVA lab"
 env:
   # git sha, tag or branch in lava-test-plans repository
-  LAVA_TEST_PLANS_REF: "6070e41a1472e3fd595ea7ac849f7c30f86a2282"
+  LAVA_TEST_PLANS_REF: "63cf5b19c90ca66192d674ffdf2db438b011b502"
   # CalVer tag in qcom-linux-testkit repository (format: testkit-YYYY.MM.DD)
-  TESTKIT_REF: "testkit-2026.08.14"
+  TESTKIT_REF: "testkit-2026.09.20"
 
 jobs:
   prepare-env:
@@ -43,7 +43,12 @@ jobs:
   test-nodistro:
     needs: [prepare-env]
     name: "Test nodistro"
-    uses: ./.github/workflows/test-distro.yml
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+    uses: $/.github/workflows/test-distro.yml
     secrets:
       LAVATOKEN: ${{ secrets.LAVATOKEN }}
     with:
@@ -58,7 +63,12 @@ jobs:
   test-qcom-distro:
     needs: [prepare-env]
     name: "Test qcom-distro"
-    uses: ./.github/workflows/test-distro.yml
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+    uses: $/.github/workflows/test-distro.yml
     secrets:
       LAVATOKEN: ${{ secrets.LAVATOKEN }}
     with:
@@ -74,7 +84,12 @@ jobs:
   test-qcom-distro_linux-qcom-6-18:
     needs: [prepare-env]
     name: "Test qcom-distro_linux-qcom-6.18"
-    uses: ./.github/workflows/test-distro.yml
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+    uses: $/.github/workflows/test-distro.yml
     secrets:
       LAVATOKEN: ${{ secrets.LAVATOKEN }}
     with:
