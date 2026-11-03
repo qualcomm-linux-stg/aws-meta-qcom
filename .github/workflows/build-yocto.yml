@@ -26,7 +26,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CACHE_DIR: /efsx/qli/meta-qcom
+  #CACHE_DIR: /efsx/qli/meta-qcom
+  CACHE_DIR: ${{ github.workspace }}
+  SSTATE_MIRRORS: "file://.* file:///efsx/qli/meta-qcom/sstate-cache/PATH"
   KAS_CLONE_DEPTH: 1
   KAS_CONTAINER: ${{ github.workspace }}/kas-container
   KAS_CONTAINER_IMAGE: ghcr.io/siemens/kas/kas@sha256:3f3d3257e8d4ca3adfcb2e0025e6da24339fb8d68a6999ca36c37381351582d5 # 5.5-9-g0555188
@@ -137,16 +139,19 @@ jobs:
 
       - name: Setup cache variables (used by oe-selftest)
         run: |
+          # Pre-create the directories to avoid permission races
+          mkdir -p ${CACHE_DIR}/downloads
+          mkdir -p ${CACHE_DIR}/sstate-cache
           # Job-local git clone dirs, as in ci/ci.yml; passed via KAS_OPTS as
           # kas-container only forwards a fixed set of environment variables.
-          echo "DL_DIR=${WORKSPACE}/downloads-pr" >> $GITHUB_ENV
+          echo "DL_DIR=${CACHE_DIR}/downloads" >> $GITHUB_ENV
           # use a single shared sstate cache folder, cleaned up by mtime
-          echo "SSTATE_DIR=${WORKSPACE}/sstate-cache-pr" >> $GITHUB_ENV
-          echo "KAS_OPTS=--runtime-args --env=GIT_CLONEDIR_JOB_LOCAL=1" >> $GITHUB_ENV
+          echo "SSTATE_DIR=${CACHE_DIR}/sstate-cache" >> $GITHUB_ENV
+          echo "KAS_OPTS=--runtime-args --env=GIT_CLONEDIR_JOB_LOCAL=1"
+          echo "KAS_EXTRA_RUNTIME_ARGS=--runtime-args '-v ${CACHE_DIR}/sstate-cache:${CACHE_DIR}/sstate-cache:ro -v ${CACHE_DIR}/downloads:${CACHE_DIR}/downloads:ro'" >> $GITHUB_ENV
           # Point the mirror back at the original shared RO cache
           echo "SSTATE_MIRRORS=file://.* file://${CACHE_DIR}/sstate-cache/PATH" >> $GITHUB_ENV
           echo "SOURCE_MIRROR_URL=file://${CACHE_DIR}/downloads"  >> $GITHUB_ENV
-          echo "INHERIT += 'own-mirrors'"                          >> $GITHUB_ENV
 
       - name: Run Yocto patchreview
         run: |
@@ -162,7 +167,7 @@ jobs:
 
   compile-env:
     if: github.repository_owner == 'qualcomm-linux-stg'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, qcom-stg-u2404, arm64]
     outputs:
       CACHE_DIR: ${{ steps.compile_env.outputs.CACHE_DIR }}
     steps:
