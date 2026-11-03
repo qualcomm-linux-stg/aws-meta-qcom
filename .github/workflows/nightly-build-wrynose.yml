@@ -10,7 +10,7 @@ on:
   # build at the same time. Wednesday and Saturday are covered by the
   # extended build dispatcher, which triggers a superset of this matrix on
   # wrynose.
-  - cron: "22 2 * * 0,1,2,4,5"
+  #- cron: "22 2 * * 0,1,2,4,5"
 
 permissions:
   checks: write
