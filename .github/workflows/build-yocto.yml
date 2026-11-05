@@ -26,15 +26,17 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CACHE_DIR: /efsx/qli/meta-qcom
+  #CACHE_DIR: /efsx/qli/meta-qcom
+  CACHE_DIR: ${{ github.workspace }}
+  SSTATE_MIRRORS: "file://.* file:///efsx/qli/meta-qcom/sstate-cache/PATH"
   KAS_CLONE_DEPTH: 1
   KAS_CONTAINER: ${{ github.workspace }}/kas-container
   KAS_CONTAINER_IMAGE: ghcr.io/siemens/kas/kas@sha256:3f3d3257e8d4ca3adfcb2e0025e6da24339fb8d68a6999ca36c37381351582d5 # 5.5-9-g0555188
 
 jobs:
   kas-setup:
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, arm64]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -64,7 +66,7 @@ jobs:
 
   github-cache-check:
     needs: kas-setup
-    if: github.repository_owner == 'qualcomm-linux'
+    if: github.repository_owner == 'qualcomm-linux-stg'
     runs-on: ubuntu-latest
     outputs:
       cache_hit: ${{ steps.restore.outputs.cache-hit == 'true' }}
@@ -118,9 +120,9 @@ jobs:
   yocto-run-checks:
     needs: [kas-setup, github-cache-check]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
-    runs-on: [self-hosted, qcom-u2404, amd64]
+    runs-on: [self-hosted, qcom-stg-u2404, arm64]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -137,12 +139,19 @@ jobs:
 
       - name: Setup cache variables (used by oe-selftest)
         run: |
+          # Pre-create the directories to avoid permission races
+          mkdir -p ${CACHE_DIR}/downloads
+          mkdir -p ${CACHE_DIR}/sstate-cache
           # Job-local git clone dirs, as in ci/ci.yml; passed via KAS_OPTS as
           # kas-container only forwards a fixed set of environment variables.
           echo "DL_DIR=${CACHE_DIR}/downloads" >> $GITHUB_ENV
           # use a single shared sstate cache folder, cleaned up by mtime
           echo "SSTATE_DIR=${CACHE_DIR}/sstate-cache" >> $GITHUB_ENV
-          echo "KAS_OPTS=--runtime-args --env=GIT_CLONEDIR_JOB_LOCAL=1" >> $GITHUB_ENV
+          echo "KAS_OPTS=--runtime-args --env=GIT_CLONEDIR_JOB_LOCAL=1"
+          echo "KAS_EXTRA_RUNTIME_ARGS=--runtime-args '-v ${CACHE_DIR}/sstate-cache:${CACHE_DIR}/sstate-cache:ro -v ${CACHE_DIR}/downloads:${CACHE_DIR}/downloads:ro'" >> $GITHUB_ENV
+          # Point the mirror back at the original shared RO cache
+          echo "SSTATE_MIRRORS=file://.* file://${CACHE_DIR}/sstate-cache/PATH" >> $GITHUB_ENV
+          echo "SOURCE_MIRROR_URL=file://${CACHE_DIR}/downloads"  >> $GITHUB_ENV
 
       - name: Run Yocto patchreview
         run: |
@@ -157,8 +166,8 @@ jobs:
           ci/kas-container-shell-helper.sh ci/oe-selftest.sh
 
   compile-env:
-    if: github.repository_owner == 'qualcomm-linux'
-    runs-on: ubuntu-latest
+    if: github.repository_owner == 'qualcomm-linux-stg'
+    runs-on: [self-hosted, qcom-stg-u2404, arm64]
     outputs:
       CACHE_DIR: ${{ steps.compile_env.outputs.CACHE_DIR }}
     steps:
@@ -170,7 +179,7 @@ jobs:
   testimage-build:
     needs: [kas-setup, github-cache-check, compile-env]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
     permissions:
       contents: read
@@ -199,7 +208,7 @@ jobs:
   testimage:
     needs: [testimage-build, github-cache-check, compile-env]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
     permissions:
       contents: read
@@ -230,7 +239,7 @@ jobs:
   compile_stage1:
     needs: [kas-setup, github-cache-check, compile-env]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
     permissions:
       contents: read
@@ -252,7 +261,7 @@ jobs:
   compile_stage2:
     needs: [github-cache-check, compile_stage1, compile-env]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
     permissions:
       contents: read
@@ -305,7 +314,7 @@ jobs:
   compile_sdk:
     needs: [github-cache-check, compile_stage2, compile-env]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
     permissions:
       contents: read
@@ -328,7 +337,7 @@ jobs:
   compile_stage3:
     needs: [github-cache-check, compile_stage2, compile-env]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
     permissions:
       contents: read
@@ -630,7 +639,7 @@ jobs:
   publish_summary:
     needs: [github-cache-check, compile_stage3, compile_sdk, testimage]
     if: |
-      always() && github.repository_owner == 'qualcomm-linux' &&
+      always() && github.repository_owner == 'qualcomm-linux-stg' &&
       (inputs.skip_if_github_cached != true || needs.github-cache-check.outputs.cache_hit != 'true')
     runs-on: ubuntu-latest
     steps:
@@ -646,7 +655,7 @@ jobs:
   github-cache-save:
     needs: [github-cache-check, compile_stage3, compile_sdk, testimage]
     if: |
-      github.repository_owner == 'qualcomm-linux' &&
+      github.repository_owner == 'qualcomm-linux-stg' &&
       inputs.skip_if_github_cached == true &&
       needs.github-cache-check.outputs.cache_hit != 'true' &&
       needs.compile_stage3.result == 'success'
@@ -662,7 +671,7 @@ jobs:
           key: build-success-${{ github.repository }}-${{ github.workflow }}-${{ github.ref_name }}-${{ needs.github-cache-check.outputs.run_hash }}
 
   build_successful:
-    if: github.repository_owner == 'qualcomm-linux'
+    if: github.repository_owner == 'qualcomm-linux-stg'
     needs: [compile_stage3, compile_sdk, testimage]
     runs-on: ubuntu-latest
     steps:
