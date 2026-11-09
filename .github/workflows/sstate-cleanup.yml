@@ -5,7 +5,7 @@ on:
   schedule:
   # NOTE - changes to the cron spec should be pushed by https://github.com/quic-yocto-ci
   # so that build notification emails will be sent out properly.
-  - cron: "23 10 * * 6"   # weekly job - at "random" time - top of hour can be busy in github
+  #- cron: "23 10 * * 6"   # weekly job - at "random" time - top of hour can be busy in github
 
 permissions: {}
 
