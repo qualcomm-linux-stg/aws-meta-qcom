@@ -55,7 +55,7 @@ env:
 jobs:
   reusable_compile_job:
     if: inputs.enabled
-    runs-on: [self-hosted, qcom-u2404, "${{ inputs.run_on }}"]
+    runs-on: [self-hosted, qcom-stg-u2404, "${{ inputs.run_on }}"]
     timeout-minutes: 480
     name: ${{ inputs.name }}
     steps:
@@ -124,14 +124,53 @@ jobs:
           rename.ul -va buildstats buildstats-world $KAS_WORK_DIR/build/buildstats*
           mv $KAS_WORK_DIR/build/buildstats* .
 
+      - name: Debug KAS Podman KVM command
+        if: inputs.target
+        shell: bash
+        run: |
+          echo "=== Host ==="
+          id
+
+          echo "=== Podman runtime ==="
+          podman info --format '{{.Host.OCIRuntime.Name}}'
+
+          if [ -c /dev/kvm ]; then
+            echo "=== Host KVM ==="
+            ls -ln /dev/kvm
+
+            echo "=== KAS debug ==="
+
+            "$KAS_CONTAINER" \
+              --log-level debug \
+              --kvm \
+              --runtime-args "--group-add keep-groups" \
+              shell "${KAS_YAMLS}" \
+              --command '
+                echo "=== Container identity ==="
+                id
+
+                echo "=== Container KVM ==="
+                ls -ln /dev/kvm
+
+                test -r /dev/kvm && echo KVM_READ_OK || echo KVM_READ_FAIL
+                test -w /dev/kvm && echo KVM_WRITE_OK || echo KVM_WRITE_FAIL
+              '
+          else
+            echo "HOST_KVM_MISSING"
+          fi
+
       - name: Kas build images
         if:  inputs.target
         shell: bash
         run: |
           if [ -c /dev/kvm ]; then
-            KAS_CONTAINER="$KAS_CONTAINER --kvm"
+            "$KAS_CONTAINER" \
+              --kvm \
+              --runtime-args "--group-add keep-groups" \
+              build "${KAS_YAMLS}"
+          else
+            "$KAS_CONTAINER" build "${KAS_YAMLS}"
           fi
-          $KAS_CONTAINER build ${KAS_YAMLS}
 
       - name: Kas build images (buildstats)
         if:  inputs.target
@@ -227,7 +266,7 @@ jobs:
         with:
           path: ./uploads
           destination: ${{ github.repository_owner }}/${{ github.event.repository.name }}/${{ github.run_id }}-${{ github.run_attempt }}/
-          s3_bucket: qcom-prd-gh-artifacts
+          s3_bucket: qcom-stg-gh-artifacts
           object_tag: ${{ env.OBJECT_TAG }}
           build_type: ${{ env.BUILD_TYPE }}
           build_branch: "branch=${{ github.base_ref || github.ref_name }}"
