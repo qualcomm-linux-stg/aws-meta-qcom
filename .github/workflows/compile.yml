@@ -129,7 +129,7 @@ jobs:
         shell: bash
         run: |
           if [ -c /dev/kvm ]; then
-            KAS_CONTAINER="$KAS_CONTAINER --kvm"
+            KAS_CONTAINER="$KAS_CONTAINER --kvm --runtime-args '--group-add keep-groups'"
           fi
           $KAS_CONTAINER build ${KAS_YAMLS}
 
