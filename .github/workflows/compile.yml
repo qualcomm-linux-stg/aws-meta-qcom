@@ -124,6 +124,25 @@ jobs:
           rename.ul -va buildstats buildstats-world $KAS_WORK_DIR/build/buildstats*
           mv $KAS_WORK_DIR/build/buildstats* .
 
+      - name: Debug KVM access in kas-container
+        if: inputs.target
+        shell: bash
+        run: |
+          echo "Host:"
+          id
+          ls -ln /dev/kvm
+
+          echo "KAS container:"
+          "$KAS_CONTAINER" \
+            --kvm \
+            --runtime-args "--group-add keep-groups" \
+            shell "${KAS_YAMLS}" \
+            --command '
+              id
+              ls -ln /dev/kvm
+              test -r /dev/kvm && echo KVM_READ_OK || echo KVM_READ_FAIL
+              test -w /dev/kvm && echo KVM_WRITE_OK || echo KVM_WRITE_FAIL
+            '
       - name: Kas build images
         if:  inputs.target
         shell: bash
