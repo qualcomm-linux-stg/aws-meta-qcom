@@ -129,9 +129,13 @@ jobs:
         shell: bash
         run: |
           if [ -c /dev/kvm ]; then
-            KAS_CONTAINER="$KAS_CONTAINER --kvm --runtime-args '--group-add keep-groups'"
+            "$KAS_CONTAINER" \
+              --kvm \
+              --runtime-args "--group-add keep-groups" \
+              build "${KAS_YAMLS}"
+          else
+            "$KAS_CONTAINER" build "${KAS_YAMLS}"
           fi
-          $KAS_CONTAINER build ${KAS_YAMLS}
 
       - name: Kas build images (buildstats)
         if:  inputs.target
