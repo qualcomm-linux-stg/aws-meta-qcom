@@ -143,7 +143,14 @@ jobs:
           echo "DL_DIR=${CACHE_DIR}/downloads" >> $GITHUB_ENV
           # use a single shared sstate cache folder, cleaned up by mtime
           echo "SSTATE_DIR=${CACHE_DIR}/sstate-cache" >> $GITHUB_ENV
-          echo "KAS_OPTS=--runtime-args --env=GIT_CLONEDIR_JOB_LOCAL=1" >> $GITHUB_ENV
+          #echo "KAS_OPTS=--runtime-args --env=GIT_CLONEDIR_JOB_LOCAL=1" >> $GITHUB_ENV
+          echo "KAS_OPTS=--runtime-args \
+          --env=GIT_CLONEDIR_JOB_LOCAL=1 \
+          --env=GIT_CONFIG_COUNT=2 \
+          --env=GIT_CONFIG_KEY_0=safe.directory \
+          --env=GIT_CONFIG_VALUE_0=/repo \
+          --env=GIT_CONFIG_KEY_1=safe.directory \
+          --env=GIT_CONFIG_VALUE_1=/repo/.git" >> $GITHUB_ENV
 
       - name: Run Yocto patchreview
         run: |
