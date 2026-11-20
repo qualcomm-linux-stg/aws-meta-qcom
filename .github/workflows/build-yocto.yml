@@ -34,7 +34,8 @@ env:
 jobs:
   kas-setup:
     if: github.repository_owner == 'qualcomm-linux-stg'
-    runs-on: [self-hosted, qcom-stg-u2404, amd64]
+    runs-on: ubuntu-latest
+    #runs-on: [self-hosted, qcom-stg-u2404, amd64]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -51,7 +52,7 @@ jobs:
 
       - name: Run kas lock
         run: |
-          ${KAS_CONTAINER} --repo-rw lock ci/base.yml:ci/qcom-distro.yml:ci/meta-arm.yml:ci/meta-yocto.yml
+          ${KAS_CONTAINER} lock ci/base.yml:ci/qcom-distro.yml:ci/meta-arm.yml:ci/meta-yocto.yml
 
       - name: Upload kas
         uses: actions/upload-artifact@v6
