@@ -146,9 +146,11 @@ jobs:
           #echo "KAS_OPTS=--runtime-args --env=GIT_CLONEDIR_JOB_LOCAL=1" >> $GITHUB_ENV
           cat > /tmp/kas-rootless.env <<'EOF'
           GIT_CLONEDIR_JOB_LOCAL=1
-          GIT_CONFIG_COUNT=1
+          GIT_CONFIG_COUNT=2
           GIT_CONFIG_KEY_0=safe.directory
           GIT_CONFIG_VALUE_0=/repo
+          GIT_CONFIG_KEY_1=safe.directory
+          GIT_CONFIG_VALUE_1=/repo/.git
           EOF
 
           echo "KAS_OPTS=--runtime-args --env-file=/tmp/kas-rootless.env" >> "$GITHUB_ENV"
