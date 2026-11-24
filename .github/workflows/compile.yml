@@ -116,23 +116,6 @@ jobs:
         run: |
           $KAS_CONTAINER build ${KAS_YAMLS}:ci/world.yml
 
-      - name: Kas build world (buildstats)
-        if:  inputs.world
-        shell: bash
-        run: |
-          ci/kas-container-shell-helper.sh ci/yocto-buildstats.sh
-          rename.ul -va buildstats buildstats-world $KAS_WORK_DIR/build/buildstats*
-          mv $KAS_WORK_DIR/build/buildstats* .
-
-      - name: Kas build images
-        if:  inputs.target
-        shell: bash
-        run: |
-          if [ -c /dev/kvm ]; then
-            KAS_CONTAINER="$KAS_CONTAINER --kvm"
-          fi
-          $KAS_CONTAINER build ${KAS_YAMLS}
-
       - name: Debug KAS workspace permissions
         if: always()
         run: |
@@ -175,6 +158,23 @@ jobs:
           find "$GITHUB_WORKSPACE/../kas/build" \
             -maxdepth 1 \
             -printf '%u:%g %m %p\n' | head -30
+            
+      - name: Kas build world (buildstats)
+        if:  inputs.world
+        shell: bash
+        run: |
+          ci/kas-container-shell-helper.sh ci/yocto-buildstats.sh
+          rename.ul -va buildstats buildstats-world $KAS_WORK_DIR/build/buildstats*
+          mv $KAS_WORK_DIR/build/buildstats* .
+
+      - name: Kas build images
+        if:  inputs.target
+        shell: bash
+        run: |
+          if [ -c /dev/kvm ]; then
+            KAS_CONTAINER="$KAS_CONTAINER --kvm"
+          fi
+          $KAS_CONTAINER build ${KAS_YAMLS}
 
       - name: Kas build images (buildstats)
         if:  inputs.target
