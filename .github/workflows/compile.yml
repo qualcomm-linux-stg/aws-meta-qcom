@@ -116,56 +116,13 @@ jobs:
         run: |
           $KAS_CONTAINER build ${KAS_YAMLS}:ci/world.yml
 
-      - name: Debug KAS workspace permissions
-        if: always()
-        run: |
-          echo "=== Runner identity ==="
-          id
-
-          echo "=== GitHub workspace ==="
-          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
-          pwd
-          stat -c '%u:%g %a %n' \
-            "$GITHUB_WORKSPACE" \
-            "$GITHUB_WORKSPACE/.." || true
-
-          echo "=== KAS workspace ==="
-          stat -c '%u:%g %a %n' \
-            "$GITHUB_WORKSPACE/../kas" \
-            "$GITHUB_WORKSPACE/../kas/build" || true
-
-          echo "=== Buildstats files ==="
-          stat -c '%u:%g %a %n' \
-            "$GITHUB_WORKSPACE/../kas/build/buildstats.log" \
-            "$GITHUB_WORKSPACE/../kas/build/buildstats.svg" || true
-
-          echo "=== Existing destination files ==="
-          stat -c '%u:%g %a %n' \
-            "$GITHUB_WORKSPACE/buildstats.log" \
-            "$GITHUB_WORKSPACE/buildstats.svg" 2>/dev/null || true
-
-          echo "=== Write test in workspace ==="
-          touch "$GITHUB_WORKSPACE/copilot-permission-test" \
-            && echo "WORKSPACE_WRITE_OK" \
-            || echo "WORKSPACE_WRITE_FAIL"
-
-          echo "=== Write test in KAS build ==="
-          touch "$GITHUB_WORKSPACE/../kas/build/copilot-permission-test" \
-            && echo "KAS_BUILD_WRITE_OK" \
-            || echo "KAS_BUILD_WRITE_FAIL"
-
-          echo "=== Ownership sample ==="
-          find "$GITHUB_WORKSPACE/../kas/build" \
-            -maxdepth 1 \
-            -printf '%u:%g %m %p\n' | head -30
-            
       - name: Kas build world (buildstats)
         if:  inputs.world
         shell: bash
         run: |
           ci/kas-container-shell-helper.sh ci/yocto-buildstats.sh
-          rename.ul -va buildstats buildstats-world $KAS_WORK_DIR/build/buildstats*
-          mv $KAS_WORK_DIR/build/buildstats* .
+          cp $KAS_WORK_DIR/build/buildstats* .
+          rename.ul -va buildstats buildstats-world buildstats*
 
       - name: Kas build images
         if:  inputs.target
@@ -181,7 +138,7 @@ jobs:
         shell: bash
         run: |
           ci/kas-container-shell-helper.sh ci/yocto-buildstats.sh
-          mv $KAS_WORK_DIR/build/buildstats* .
+          cp $KAS_WORK_DIR/build/buildstats* .
 
       - name: Kas build SDK
         if:  inputs.sdk
@@ -196,8 +153,8 @@ jobs:
         shell: bash
         run: |
           ci/kas-container-shell-helper.sh ci/yocto-buildstats.sh
-          rename.ul -av buildstats buildstats-sdk $KAS_WORK_DIR/build/buildstats*
-          mv $KAS_WORK_DIR/build/buildstats* .
+          cp $KAS_WORK_DIR/build/buildstats* .
+          rename.ul -av buildstats buildstats-sdk buildstats*
 
       - name: Stage build artifacts for publishing
         shell: bash
