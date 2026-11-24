@@ -149,38 +149,6 @@ jobs:
         run: |
           ci/kas-container-shell-helper.sh ci/yocto-patchreview.sh
 
-      - name: Debug KAS cache access
-        run: |
-            ${KAS_CONTAINER} ${KAS_OPTS} \
-            shell ci/base.yml \
-            --command '
-            echo "=== Identity ==="
-            id
-
-            echo "=== Mounts ==="
-            mount | grep -E "/downloads|/sstate" || true
-
-            echo "=== Ownership ==="
-            ls -ldn /downloads /sstate
-
-            echo "=== Downloads write test ==="
-            touch /downloads/kas-debug-test &&
-            echo DOWNLOADS_WRITE_OK ||
-            echo DOWNLOADS_WRITE_FAIL
-
-            echo "=== Sstate write test ==="
-            touch /sstate/kas-debug-test &&
-            echo SSTATE_WRITE_OK ||
-            echo SSTATE_WRITE_FAIL
-
-            echo "=== Git ==="
-            git config --global --add safe.directory /repo
-            git config --global --add safe.directory /repo/.git
-            git config --global --get-all safe.directory
-
-            echo "=== Done ==="
-            '
-
       - name: Run yocto-check-layer
         run: |
           ci/kas-container-shell-helper.sh ci/yocto-check-layer.sh
