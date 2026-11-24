@@ -27,4 +27,8 @@ SCRIPT=${SCRIPT#$TOPDIR/}
 KAS_CONTAINER=${KAS_CONTAINER:-$(which kas-container)}
 
 # KAS_OPTS: extra kas-container options, e.g. --runtime-args --env=NAME=value
-exec $KAS_CONTAINER ${KAS_OPTS:-} shell ${KAS_YAMLS:-$TOPDIR/ci/base.yml} --command "/repo/$SCRIPT /repo /work"
+#exec $KAS_CONTAINER ${KAS_OPTS:-} shell ${KAS_YAMLS:-$TOPDIR/ci/base.yml} --command "/repo/$SCRIPT /repo /work"
+exec $KAS_CONTAINER ${KAS_OPTS:-} shell ${KAS_YAMLS:-$TOPDIR/ci/base.yml} --command \
+    "git config --global --add safe.directory /repo && \
+     git config --global --add safe.directory /repo/.git && \
+     exec /repo/$SCRIPT /repo /work"

@@ -55,7 +55,7 @@ env:
 jobs:
   reusable_compile_job:
     if: inputs.enabled
-    runs-on: [self-hosted, qcom-u2404, "${{ inputs.run_on }}"]
+    runs-on: [self-hosted, qcom-stg-u2404, "${{ inputs.run_on }}"]
     timeout-minutes: 480
     name: ${{ inputs.name }}
     steps:
@@ -121,8 +121,8 @@ jobs:
         shell: bash
         run: |
           ci/kas-container-shell-helper.sh ci/yocto-buildstats.sh
-          rename.ul -va buildstats buildstats-world $KAS_WORK_DIR/build/buildstats*
-          mv $KAS_WORK_DIR/build/buildstats* .
+          cp $KAS_WORK_DIR/build/buildstats* .
+          rename.ul -va buildstats buildstats-world buildstats*
 
       - name: Kas build images
         if:  inputs.target
@@ -138,7 +138,7 @@ jobs:
         shell: bash
         run: |
           ci/kas-container-shell-helper.sh ci/yocto-buildstats.sh
-          mv $KAS_WORK_DIR/build/buildstats* .
+          cp $KAS_WORK_DIR/build/buildstats* .
 
       - name: Kas build SDK
         if:  inputs.sdk
@@ -153,8 +153,8 @@ jobs:
         shell: bash
         run: |
           ci/kas-container-shell-helper.sh ci/yocto-buildstats.sh
-          rename.ul -av buildstats buildstats-sdk $KAS_WORK_DIR/build/buildstats*
-          mv $KAS_WORK_DIR/build/buildstats* .
+          cp $KAS_WORK_DIR/build/buildstats* .
+          rename.ul -av buildstats buildstats-sdk buildstats*
 
       - name: Stage build artifacts for publishing
         shell: bash
@@ -227,7 +227,7 @@ jobs:
         with:
           path: ./uploads
           destination: ${{ github.repository_owner }}/${{ github.event.repository.name }}/${{ github.run_id }}-${{ github.run_attempt }}/
-          s3_bucket: qcom-prd-gh-artifacts
+          s3_bucket: qcom-stg-gh-artifacts
           object_tag: ${{ env.OBJECT_TAG }}
           build_type: ${{ env.BUILD_TYPE }}
           build_branch: "branch=${{ github.base_ref || github.ref_name }}"
